@@ -1,7 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
 import { format } from 'date-fns';
-import { InvoiceData } from '../types/invoice';
 
 const styles = StyleSheet.create({
   page: {
@@ -200,13 +199,32 @@ const styles = StyleSheet.create({
 });
 
 interface InvoicePDFProps {
-  data: InvoiceData;
+  data: {
+    id: string;
+    invoice_number: string;
+    date: string;
+    client: {
+      name: string;
+      address: string;
+      email?: string;
+      phone?: string;
+    };
+    items: {
+      description: string;
+      quantity: number;
+      unit_price: number;
+      total: number;
+    }[];
+    subtotal: number;
+    discount: number;
+    total: number;
+    notes: string;
+    terms: string;
+    status: string;
+  };
 }
 
 const InvoicePDF: React.FC<InvoicePDFProps> = ({ data }) => {
-  const total = data.items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-  const finalAmount = total - data.discount;
-
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -238,6 +256,8 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ data }) => {
             <View style={styles.billToInfo}>
               <Text style={styles.billToName}>{data.client.name}</Text>
               <Text>{data.client.address}</Text>
+              {data.client.email && <Text>{data.client.email}</Text>}
+              {data.client.phone && <Text>{data.client.phone}</Text>}
             </View>
           </View>
           <View style={styles.dateInfo}>
@@ -252,20 +272,18 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ data }) => {
             <Text>AMOUNT</Text>
           </View>
 
-          <Text style={styles.itemTitle}>{data.client.name} Website Annual Charges</Text>
-
           {data.items.map((item, index) => (
             <View key={index} style={styles.itemRow}>
               <Text style={styles.itemDescription}>{item.description}</Text>
-              <Text style={styles.itemAmount}>₹ {(item.quantity * item.unit_price).toLocaleString()}</Text>
+              <Text style={styles.itemAmount}>₹ {item.total.toLocaleString()}</Text>
             </View>
           ))}
         </View>
 
         <View style={styles.totalSection}>
           <View style={styles.totalRow}>
-            <Text style={styles.bold}>TOTAL</Text>
-            <Text style={styles.bold}>₹{total.toLocaleString()}</Text>
+            <Text style={styles.bold}>SUBTOTAL</Text>
+            <Text style={styles.bold}>₹{data.subtotal.toLocaleString()}</Text>
           </View>
           <View style={styles.totalRow}>
             <Text style={styles.bold}>DISCOUNT</Text>
@@ -274,8 +292,8 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ data }) => {
           <View style={styles.finalRow}>
             <Text style={styles.bold}>FINAL TO BE PAID</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={styles.amountInWords}>Rupees {finalAmount.toLocaleString()} Only</Text>
-              <Text style={styles.finalAmount}>₹ {finalAmount.toLocaleString()}/-</Text>
+              <Text style={styles.amountInWords}>Rupees {data.total.toLocaleString()} Only</Text>
+              <Text style={styles.finalAmount}>₹ {data.total.toLocaleString()}/-</Text>
             </View>
           </View>
         </View>

@@ -15,8 +15,6 @@ interface Invoice {
   due_date: string | null;
   client_id: string;
   subtotal: number;
-  tax_rate: number | null;
-  tax_amount: number;
   discount: number;
   total: number;
   notes: string | null;
@@ -34,8 +32,6 @@ interface Invoice {
     description: string;
     quantity: number;
     unit_price: number;
-    tax_rate: number;
-    tax_amount: number;
     total: number;
   }[];
 }
@@ -241,27 +237,21 @@ const ViewInvoice = () => {
             <PDFViewer style={{ width: '100%', height: '100%' }}>
               <InvoicePDF data={{
                 id: invoice.id,
-                invoiceNo: invoice.invoice_number,
-                date: new Date(invoice.date),
-                billTo: {
-                  name: invoice.client.name,
-                  address: invoice.client.address,
-                  pincode: '', // Add this field to your schema if needed
-                },
+                invoice_number: invoice.invoice_number,
+                date: invoice.date,
+                client: invoice.client,
                 items: invoice.items.map(item => ({
                   description: item.description,
-                  amount: item.total
+                  quantity: item.quantity,
+                  unit_price: item.unit_price,
+                  total: item.total
                 })),
                 discount: invoice.discount,
-                paymentDetails: {
-                  accountHolder: "Jithin Jacob Issac",
-                  bankName: "Federal Bank",
-                  accountNumber: "79980111697400",
-                  ifsc: "FDRL0001443",
-                  branch: "Maliappally"
-                },
-                status: invoice.status,
-                createdAt: new Date(invoice.created_at)
+                subtotal: invoice.subtotal,
+                total: invoice.total,
+                notes: invoice.notes || '',
+                terms: invoice.terms || '',
+                status: invoice.status
               }} />
             </PDFViewer>
           </div>
@@ -305,7 +295,6 @@ const ViewInvoice = () => {
                     <th className="text-left py-2">Description</th>
                     <th className="text-right py-2">Quantity</th>
                     <th className="text-right py-2">Unit Price</th>
-                    <th className="text-right py-2">Tax</th>
                     <th className="text-right py-2">Total</th>
                   </tr>
                 </thead>
@@ -315,30 +304,23 @@ const ViewInvoice = () => {
                       <td className="py-2">{item.description}</td>
                       <td className="text-right py-2">{item.quantity}</td>
                       <td className="text-right py-2">₹{item.unit_price.toLocaleString()}</td>
-                      <td className="text-right py-2">₹{item.tax_amount.toLocaleString()}</td>
                       <td className="text-right py-2">₹{item.total.toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td colSpan={4} className="text-right py-2 font-semibold">Subtotal:</td>
+                    <td colSpan={3} className="text-right py-2 font-semibold">Subtotal:</td>
                     <td className="text-right py-2">₹{invoice.subtotal.toLocaleString()}</td>
                   </tr>
-                  {invoice.tax_amount > 0 && (
-                    <tr>
-                      <td colSpan={4} className="text-right py-2 font-semibold">Tax:</td>
-                      <td className="text-right py-2">₹{invoice.tax_amount.toLocaleString()}</td>
-                    </tr>
-                  )}
                   {invoice.discount > 0 && (
                     <tr>
-                      <td colSpan={4} className="text-right py-2 font-semibold">Discount:</td>
+                      <td colSpan={3} className="text-right py-2 font-semibold">Discount:</td>
                       <td className="text-right py-2">₹{invoice.discount.toLocaleString()}</td>
                     </tr>
                   )}
                   <tr>
-                    <td colSpan={4} className="text-right py-2 font-semibold">Total:</td>
+                    <td colSpan={3} className="text-right py-2 font-semibold">Total:</td>
                     <td className="text-right py-2 font-semibold">₹{invoice.total.toLocaleString()}</td>
                   </tr>
                 </tfoot>
